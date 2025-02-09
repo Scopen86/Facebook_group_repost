@@ -42,8 +42,8 @@ with open('group_links.txt', 'r', encoding='utf-8') as f:
 with open('content.txt', 'r', encoding='utf-8') as f:
     post_content = f.read()
 
-# Assuming the images are in the same directory as the script
-image_dir = os.path.dirname(os.path.abspath(__file__))
+# Assuming the images are in the /Images folder
+image_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Images")
 
 # Login to Facebook
 url = "https://www.facebook.com/"
@@ -77,8 +77,8 @@ for index, group_link in enumerate(group_links):
     # Upload images
     image_input_collapse = driver.find_element(By.XPATH, "//div[@aria-label = 'Ảnh/video']")
     image_input_collapse.click()
-    for i in range(1, 6):
-        image_path = os.path.join(image_dir, f"{i}.jpg")
+    for image in os.listdir(image_dir):
+        image_path = os.path.join(image_dir, image)
         upload_input = driver.find_element(By.XPATH, "//input[@accept='image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv']")
         upload_input.send_keys(image_path)
         time.sleep(5)
