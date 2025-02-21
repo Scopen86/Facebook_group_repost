@@ -18,6 +18,7 @@ parser.add_argument("--credential_file", nargs='?', default="credential.txt", he
 parser.add_argument("--group_links_file", nargs='?', default="group_links.txt", help="Path to the group links file")
 parser.add_argument("--content_file", nargs='?', default="content.txt", help="Path to the content file")
 args = parser.parse_args()
+driver.maximize_window()  # Maximize the browser window
 
 def login():
     with open(args.credential_file, "r") as file:
@@ -42,7 +43,6 @@ def login():
     with open("cookies.pkl", "wb") as file:
         pickle.dump(driver.get_cookies(), file)
 
-    driver.quit()
 
 # Load content
 with open(args.group_links_file, 'r', encoding='utf-8') as f:
@@ -72,7 +72,6 @@ else:
     except FileNotFoundError:
         login()
 
-
 # Loop through each group link
 for index, group_link in enumerate(group_links):
     driver.get(group_link)
@@ -82,16 +81,16 @@ for index, group_link in enumerate(group_links):
     post_placeholder = driver.find_element(By.XPATH, "//span[contains(text(), 'Bạn viết gì đi...')]/parent::div")
     post_placeholder.click()  # Click on the parent div first
     time.sleep(2)  # Wait for the post area to load
-    post_area = driver.find_element(By.XPATH, "//div[@aria-label = 'Bạn viết gì đi...' and @contenteditable='true']")  # Find the post area using the new criteria
+    post_area = driver.find_element(By.XPATH, "//div[contains(@aria-label, '...') and @contenteditable='true']")  # Find the post area using the new criteria
     post_area.send_keys(post_content)
     time.sleep(2)  # Wait for the content to be entered
 
     # Upload images
-    image_input_collapse = driver.find_element(By.XPATH, "//div[@aria-label = 'Ảnh/video']")
-    image_input_collapse.click()
+    # image_input_collapse = driver.find_element(By.XPATH, "//div[@aria-label = 'Ảnh/video']")
+    # image_input_collapse.click()
+    upload_input = driver.find_element(By.XPATH, "(//input[@accept='image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv'])[2]")
     for image in os.listdir(image_dir):
         image_path = os.path.join(image_dir, image)
-        upload_input = driver.find_element(By.XPATH, "//input[@accept='image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv']")
         upload_input.send_keys(image_path)
         time.sleep(5)
     
