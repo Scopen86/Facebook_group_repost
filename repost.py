@@ -1,6 +1,7 @@
 import time
 import pickle
 import os
+import argparse
 
 from selenium import webdriver
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
@@ -10,8 +11,16 @@ from selenium.webdriver.common.by import By
 
 driver = webdriver.Edge(options=Options(), service=Service(EdgeChromiumDriverManager().install()))
 
+# Create an argument parser
+parser = argparse.ArgumentParser(description="Facebook group repost script")
+parser.add_argument("-l", "--login", action="store_true", help="Force login, even if cookies exist")
+parser.add_argument("--credential_file", nargs='?', default="credential.txt", help="Path to the credential file")
+parser.add_argument("--group_links_file", nargs='?', default="group_links.txt", help="Path to the group links file")
+parser.add_argument("--content_file", nargs='?', default="content.txt", help="Path to the content file")
+args = parser.parse_args()
+
 def login():
-    with open("credential.txt", "r") as file:
+    with open(args.credential_file, "r") as file:
         email, password = file.read().splitlines()
 
     url = "https://www.facebook.com/"
@@ -36,10 +45,10 @@ def login():
     driver.quit()
 
 # Load content
-with open('group_links.txt', 'r', encoding='utf-8') as f:
+with open(args.group_links_file, 'r', encoding='utf-8') as f:
     group_links = f.read().splitlines()
 
-with open('content.txt', 'r', encoding='utf-8') as f:
+with open(args.content_file, 'r', encoding='utf-8') as f:
     post_content = f.read()
 
 # Assuming the images are in the /Images folder
@@ -50,15 +59,18 @@ url = "https://www.facebook.com/"
 driver.get(url)
 time.sleep(2)  # Wait for the page to load
 
-try:
-    # Load cookies from file
-    with open("cookies.pkl", "rb") as file:
-        cookies = pickle.load(file)
-        for cookie in cookies:
-            driver.add_cookie(cookie)
-        driver.refresh()
-except FileNotFoundError:
+# Load cookies from file
+if args.login:
     login()
+else:
+    try:
+        with open("cookies.pkl", "rb") as file:
+            cookies = pickle.load(file)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+            driver.refresh()
+    except FileNotFoundError:
+        login()
 
 
 # Loop through each group link
