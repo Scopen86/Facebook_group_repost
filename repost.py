@@ -9,15 +9,15 @@ from selenium.webdriver.edge.options import Options
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.common.by import By
 
-driver = webdriver.Edge(options=Options(), service=Service(EdgeChromiumDriverManager().install()))
-
 # Create an argument parser
 parser = argparse.ArgumentParser(description="Facebook group repost script")
 parser.add_argument("-l", "--login", action="store_true", help="Force login, even if cookies exist")
 parser.add_argument("--credential_file", nargs='?', default="credential.txt", help="Path to the credential file")
-parser.add_argument("--group_links_file", nargs='?', default="group_links.txt", help="Path to the group links file")
-parser.add_argument("--content_file", nargs='?', default="content.txt", help="Path to the content file")
+parser.add_argument("-g","--group_links_file", nargs='?', default="group_links.txt", help="Path to the group links file")
+parser.add_argument("-c","--content_file", nargs='?', default="content.txt", help="Path to the content file")
 args = parser.parse_args()
+
+driver = webdriver.Edge(options=Options(), service=Service(EdgeChromiumDriverManager().install()))
 driver.maximize_window()  # Maximize the browser window
 
 def login():
@@ -86,10 +86,10 @@ for index, group_link in enumerate(group_links):
     time.sleep(2)  # Wait for the content to be entered
 
     # Upload images
-    # image_input_collapse = driver.find_element(By.XPATH, "//div[@aria-label = 'Ảnh/video']")
-    # image_input_collapse.click()
-    upload_input = driver.find_element(By.XPATH, "(//input[@accept='image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv'])[2]")
+    image_input_collapse = driver.find_element(By.XPATH, "//div[@aria-label = 'Ảnh/video']")
+    image_input_collapse.click()
     for image in os.listdir(image_dir):
+        upload_input = driver.find_element(By.XPATH, "(//input[@accept='image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv'])")
         image_path = os.path.join(image_dir, image)
         upload_input.send_keys(image_path)
         time.sleep(5)

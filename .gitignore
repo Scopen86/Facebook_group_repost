@@ -1,7 +1,13 @@
+# Sensitive files
 credential.txt
 cookies.pkl
+
+# Content files
 content.txt
 group_links.txt
+
+# Test files
 test.py
 
-Images
+# Directories
+Images/

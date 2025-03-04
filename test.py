@@ -1,6 +1,7 @@
 import time
 import pickle
 import os
+import argparse
 
 from selenium import webdriver
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
@@ -8,11 +9,19 @@ from selenium.webdriver.edge.options import Options
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.common.by import By
 
+# Create an argument parser
+parser = argparse.ArgumentParser(description="Facebook group repost script")
+parser.add_argument("-l", "--login", action="store_true", help="Force login, even if cookies exist")
+parser.add_argument("--credential_file", nargs='?', default="credential.txt", help="Path to the credential file")
+parser.add_argument("--group_links_file", nargs='?', default="group_links.txt", help="Path to the group links file")
+parser.add_argument("--content_file", nargs='?', default="content.txt", help="Path to the content file")
+args = parser.parse_args()
+
 driver = webdriver.Edge(options=Options(), service=Service(EdgeChromiumDriverManager().install()))
 driver.maximize_window()  # Maximize the browser window
 
 def login():
-    with open("credential.txt", "r") as file:
+    with open(args.credential_file, "r") as file:
         email, password = file.read().splitlines()
 
     url = "https://www.facebook.com/"
@@ -36,10 +45,10 @@ def login():
 
 
 # Load content
-with open('group_links.txt', 'r', encoding='utf-8') as f:
+with open(args.group_links_file, 'r', encoding='utf-8') as f:
     group_links = f.read().splitlines()
 
-with open('content.txt', 'r', encoding='utf-8') as f:
+with open(args.content_file, 'r', encoding='utf-8') as f:
     post_content = f.read()
 
 # Assuming the images are in the /Images folder
@@ -50,15 +59,18 @@ url = "https://www.facebook.com/"
 driver.get(url)
 time.sleep(2)  # Wait for the page to load
 
-try:
-    # Load cookies from file
-    with open("cookies.pkl", "rb") as file:
-        cookies = pickle.load(file)
-        for cookie in cookies:
-            driver.add_cookie(cookie)
-        driver.refresh()
-except FileNotFoundError:
+# Load cookies from file
+if args.login:
     login()
+else:
+    try:
+        with open("cookies.pkl", "rb") as file:
+            cookies = pickle.load(file)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+            driver.refresh()
+    except FileNotFoundError:
+        login()
 
 # Loop through each group link
 for index, group_link in enumerate(group_links):
@@ -74,13 +86,14 @@ for index, group_link in enumerate(group_links):
     time.sleep(2)  # Wait for the content to be entered
 
     # Upload images
-    # image_input_collapse = driver.find_element(By.XPATH, "//div[@aria-label = 'Ảnh/video']")
-    # image_input_collapse.click()
-    upload_input = driver.find_element(By.XPATH, "(//input[@accept='image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv'])[2]")
+    image_input_collapse = driver.find_element(By.XPATH, "//div[@aria-label='Ảnh/video']")
+    image_input_collapse.click()
+    time.sleep(2)  # Wait for the image input to expand
+    
     for image in os.listdir(image_dir):
+        upload_input = driver.find_element(By.XPATH, "//input[@accept='image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv' and @type='file']")
         image_path = os.path.join(image_dir, image)
         upload_input.send_keys(image_path)
-        input("Press Enter to continue...")
         time.sleep(5)
     
     # Post the content
